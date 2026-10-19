@@ -56,7 +56,7 @@ pnpm tauri build --bundles nsis
 ## macOS
 
 - 首发不签名、不公证；用户首次打开需右键 → 打开。
-- CI 使用 `macos-latest` + `--target aarch64-apple-darwin --bundles dmg`。
+- CI 使用 `macos-latest` + `--target aarch64-apple-darwin --bundles app,dmg`；`app` 用于生成 updater 的 `.app.tar.gz`，`dmg` 用于安装包。
 - Touch ID 标记为实验性；未签名替换后钥匙串授权可能失效，必须捕获并回退主密码。
 - 后续补签名：
   1. `tauri.conf.json` 增加 `bundle.macOS.signingIdentity`；
