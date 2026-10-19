@@ -3,7 +3,7 @@
 KeyDock 是一个常驻桌面的登录启动器：点击「站点 + 账号」，自动拉起一个全新的临时浏览器完成登录填充，提交后完全放手；会话结束即销毁，不留痕迹。
 
 - 产品与技术决策以交接文档为准，不在实现中重新讨论。
-- 当前进度：**v0.1.0**，Phase 0–6 的 Windows 部分已完成；macOS 硬件相关项待发布后人工验证。
+- 当前进度：**v0.1.0 已发布**（[GitHub Release](https://github.com/XSIJIE975/keydock/releases/tag/v0.1.0)）；macOS 硬件相关项待真机人工验证。
 - 实施报告：[docs/implementation-report.md](docs/implementation-report.md)
 - 人工测试清单：[docs/manual-test-checklist.md](docs/manual-test-checklist.md)
 - Phase 0 详情：[docs/phase-0-report.md](docs/phase-0-report.md)
