@@ -1,0 +1,182 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "要构建的版本号（如 0.1.0），留空则使用 package.json 当前版本"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  should-release:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check release version
+        id: check
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: node scripts/check-release.mjs >> "$GITHUB_OUTPUT"
+
+  create-release:
+    needs: should-release
+    if: needs.should-release.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      release_id: ${{ steps.create.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build release body
+        env:
+          RELEASE_VERSION: ${{ needs.should-release.outputs.version }}
+        run: node scripts/release-body.mjs
+
+      - name: Create draft release
+        id: create
+        uses: actions/github-script@v7
+        env:
+          VERSION: ${{ needs.should-release.outputs.version }}
+        with:
+          script: |
+            const fs = require("fs")
+            const version = process.env.VERSION
+            const body = fs.readFileSync("release-body.md", "utf8")
+            const tagName = `v${version}`
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              owner,
+              repo,
+              per_page: 100
+            })
+            const release = releases.find((item) => item.tag_name === tagName) ?? null
+
+            if (release) {
+              const updated = await github.rest.repos.updateRelease({
+                owner,
+                repo,
+                release_id: release.id,
+                tag_name: tagName,
+                name: tagName,
+                body,
+                draft: true,
+                prerelease: false
+              })
+              return updated.data.id
+            }
+
+            const created = await github.rest.repos.createRelease({
+              owner,
+              repo,
+              tag_name: tagName,
+              name: tagName,
+              body,
+              draft: true,
+              prerelease: false
+            })
+            return created.data.id
+
+  build:
+    needs: [should-release, create-release]
+    if: needs.should-release.outputs.should_build == 'true'
+    runs-on: ${{ matrix.platform }}
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: --bundles nsis
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin --bundles dmg
+            targets: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+          cache-on-failure: true
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          args: ${{ matrix.args }}
+          projectPath: .
+
+  update-notes:
+    needs: [should-release, create-release, build]
+    if: needs.should-release.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build release notes
+        env:
+          RELEASE_VERSION: ${{ needs.should-release.outputs.version }}
+        run: node scripts/release-body.mjs
+
+      - name: Fill updater notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ needs.create-release.outputs.release_id }}
+        run: node scripts/fill-updater-notes.mjs

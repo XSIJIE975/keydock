@@ -1,0 +1,17 @@
+[package]
+name = "keydock-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+aes-gcm = "0.10"
+base64 = "0.22"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+dirs = { workspace = true }
+getrandom = "0.2"
+scrypt = "0.11"
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+zeroize = "1"

@@ -1,0 +1,6 @@
+{
+  "identifier": "radial",
+  "description": "Event-only capability for the radial overlay window",
+  "windows": ["radial"],
+  "permissions": ["core:event:default"]
+}

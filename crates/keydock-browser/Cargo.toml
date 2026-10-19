@@ -1,0 +1,38 @@
+[package]
+name = "keydock-browser"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = ["captcha-ocr"]
+captcha-ocr = ["dep:ort", "dep:image"]
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.22"
+dirs = { workspace = true }
+futures-util = { workspace = true }
+image = { version = "0.25", optional = true }
+keydock-core = { path = "../keydock-core" }
+ort = { version = "=2.0.0-rc.10", optional = true, features = ["download-binaries"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55"
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_JobObjects",
+    "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+chromiumoxide = "0.9.1"
+futures = "0.3"
+tracing-subscriber = { workspace = true }
