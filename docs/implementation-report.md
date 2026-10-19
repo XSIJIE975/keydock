@@ -186,6 +186,7 @@ cargo clippy --workspace   PASS (无警告)
 - 关闭浏览器后临时 Profile 目录为空。
 - 配置导出/导入成功；开机自启 true→false 往返成功。
 - 系统锁屏时 KeyDock 自动进入 locked 状态（WTS 实测）。
+- 闲置锁定：release 构建中把阈值设为 1 分钟，无输入后自动进入 locked（实测）。
 - Mouse4 长按径向菜单显示并选择“打开面板”，主窗口展开。
 
 ### 8.3 构建产物
