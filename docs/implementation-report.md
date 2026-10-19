@@ -214,6 +214,21 @@ cargo clippy --workspace   PASS (无警告)
 
 详见 `docs/manual-test-checklist.md`。
 
+## 9.1 发布结果
+
+- GitHub Release：`v0.1.0`（已发布，public）
+  - https://github.com/XSIJIE975/keydock/releases/tag/v0.1.0
+- 资产：
+  - `KeyDock_0.1.0_x64-setup.exe` + `.sig`
+  - `KeyDock_0.1.0_aarch64.dmg`
+  - `KeyDock_0.1.0_aarch64.app.tar.gz` + `.sig`
+  - `latest.json`
+- 匿名更新清单：
+  - `https://github.com/XSIJIE975/keydock/releases/latest/download/latest.json` 返回 200
+  - 平台键：`windows-x86_64`、`windows-x86_64-nsis`、`darwin-aarch64`、`darwin-aarch64-app`
+- CI：Windows 与 macOS 的 `cargo test --workspace` 均通过；macOS release 构建也通过。
+- `main` 已启用分支保护（要求 PR 与三项状态检查；管理员可绕过）。
+
 ## 10. 复现命令
 
 ```powershell
